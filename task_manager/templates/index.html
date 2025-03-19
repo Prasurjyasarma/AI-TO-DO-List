@@ -1,0 +1,257 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Task Manager</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'styles.css' %}" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" />
+  </head>
+  <body>
+    <!-- Navigation Bar -->
+    <nav class="navbar" data-aos="fade-down">
+      <div class="navbar-left">
+        <a href="#" class="user-name">Hi, {{request.user.first_name}}</a>
+        <a href="{% url 'history_tasks' %}" class="history-link">History</a>
+      </div>
+      <div class="navbar-right">
+        <a href="{% url 'logout' %}" class="logout-btn">Logout</a>
+      </div>
+      
+    </nav>
+
+    <h1>Task Manager 📝</h1>
+    <form action="{% url 'add_task' %}" method="post" class="task-form" data-aos="fade-in">
+      {% csrf_token %}
+      <label for="title">Task Title</label>
+      <input
+        type="text"
+        name="title"
+        id="title"
+        class="form-control"
+        placeholder="Enter a task"
+        required
+      />
+      <label for="desc">Description</label>
+      <button type="button" id="generate-ai-btn" class="btn-ai">✏️</button>
+      <textarea
+        name="desc"
+        id="desc"
+        class="form-control"
+        placeholder="Enter the description"
+      ></textarea>
+
+      <label for="priority">Priority (1-5)</label>
+      <input
+        type="number"
+        name="priority"
+        id="priority"
+        class="form-control"
+        min="1"
+        max="5"
+        placeholder="Enter your priority"
+        required
+      />
+      <label for="status">Status</label>
+      <select name="status" id="status" class="form-control">
+        <option value="pending">Pending</option>
+        <option value="in_progress">In Progress</option>
+        <option value="completed">Completed</option>
+      </select>
+      <button type="submit" class="btn btn-primary mt-3">Add Task</button>
+    </form>
+
+    <form action="{% url 'home' %}" method="get" class="sort-form" data-aos="fade-in">
+      <label for="sort">Sort by: </label>
+      <select name="sort" id="sort" onchange="this.form.submit()">
+        <option value="-priority" {% if sort_tasks|default:"-priority" == "-priority" %} selected {% endif %}>High to Low</option>
+        <option value="priority" {% if sort_tasks|default:"-priority" == "priority" %} selected {% endif %}>Low to High</option>
+      </select>
+    </form>
+
+    <div>
+      <form action="{% url 'delete_all_tasks' %}" method="post" class="delete_all_form" data-aos="fade-in">
+        {% csrf_token %}
+        <button type="submit" class="btn-delete-all">💀 Delete All</button>
+      </form>
+    </div>
+
+    <div class="task-container" data-aos="fade-up">
+      {% for task in tasks %}
+      <div class="task-card priority-{{ task.priority }}">
+        <div class="task-header">
+          <h3>{{ task.title }}</h3>
+          <span class="task-status {{ task.status }}">{{ task.status }}</span>
+
+          <form action="{% url 'delete_task' task.id %}" method="post" class="delete_form">
+            {% csrf_token %}
+            <button type="submit" class="btn-delete">delete</button>
+          </form>
+
+          <button type="button" class="btn-edit" id="edit_btn">edit</button>
+          <form action='{% url "edit_task" task.id %}' method="post" class="edit_form_hidden" id="edit_form">
+            {% csrf_token %}
+            <label for="title_{{task.id}}">Task Title</label>
+            <input
+              type="text"
+              name="title"
+              id="title_{{ task.id }}"
+              class="form-control"
+              placeholder="Enter a task"
+              value="{{task.title}}"
+              required
+            />
+            <label for="desc_{{task.id}}">Description</label>
+            <textarea
+              name="desc"
+              id="desc_{{task.id}}"
+              class="form-control"
+              placeholder="Enter the description"
+            >{{task.description}}</textarea>
+
+            <label for="priority_{{task.id}}">Priority (1-5)</label>
+            <input
+              type="number"
+              name="priority"
+              id="priority_{{task.id}}"
+              class="form-control"
+              min="1"
+              max="5"
+              placeholder="Enter your priority"
+              value="{{task.priority}}"
+            />
+            <label for="status_{{task.id}}">Status</label>
+            <select name="status" id="status_{{task.id}}" class="form-control">
+              <option value="pending" {% if task.status == "pending"%} selected {% endif %}>Pending</option>
+              <option value="in_progress"{% if task.status == "in_progress"%} selected {% endif %}>In Progress</option>
+              <option value="completed" {% if task.status == "completed"%} selected {% endif %}>Completed</option>
+            </select>
+            <button type="submit" class="btn btn-primary mt-3">Edit Task</button>
+          </form>
+        </div>
+        <div class="task-body">
+          <p class="task-description">{{ task.description }}</p>
+        </div>
+        <div class="task-footer">
+          <span class="task-priority">Priority: {{ task.priority }}</span>
+          <span class="task-created-at" id="created_at">{{ task.created_at }}</span>
+          <span class="task-updated-at" id="update_at">{{ task.updated_at }}</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <footer class="footer" >
+      <div class="footer-content">
+        <p>Built with ❤️ by Prasurjya Sarma</p>
+        <p>Check out my GitHub for the full project code! 🚀</p>
+        <div class="footer-links">
+          <a href="#" class="footer-link">Linkedin</a>
+          <a href="#" class="footer-link">Github</a>
+          <a href="#" class="footer-link">Instagram</a>
+        </div>
+      </div>
+    </footer>
+
+
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+    <script>
+      AOS.init();
+    </script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // AI Description Generator
+        const generateAiBtn = document.getElementById("generate-ai-btn");
+        if (generateAiBtn) {
+          const titleInput = document.getElementById("title");
+          const descTextarea = document.getElementById("desc");
+
+          generateAiBtn.addEventListener("click", function () {
+            const title = titleInput.value.trim();
+
+            if (!title) {
+              alert("Please enter a task title first");
+              return;
+            }
+
+            generateAiBtn.textContent = "⏳";
+            generateAiBtn.disabled = true;
+
+            const csrftoken = document.querySelector("[name=csrfmiddlewaretoken]").value;
+
+            const formData = new FormData();
+            formData.append("title", title);
+
+            fetch('{% url "generate_description" %}', {
+              method: "POST",
+              headers: {
+                "X-Requested-With": "XMLHttpRequest",
+                "X-CSRFToken": csrftoken,
+              },
+              body: formData,
+            })
+              .then((response) => response.json())
+              .then((data) => {
+                if (data.error) {
+                  alert("Error: " + data.error);
+                } else {
+                  descTextarea.value = data.description;
+                }
+              })
+              .catch((error) => {
+                console.error("Error:", error);
+                alert("Failed to generate description");
+              })
+              .finally(() => {
+                generateAiBtn.textContent = "✏️";
+                generateAiBtn.disabled = false;
+              });
+          });
+        }
+
+        // Edit form toggle
+        const editButtons = document.querySelectorAll(".btn-edit");
+        editButtons.forEach((button) => {
+          button.addEventListener("click", function () {
+            // Find the closest task-card parent
+            const taskCard = this.closest(".task-card");
+            if (!taskCard) return;
+
+            // Find the edit form within this task card
+            const editForm = taskCard.querySelector(".edit_form_hidden");
+            if (!editForm) return;
+
+            // Toggle the form visibility
+            if (editForm.style.display === "block") {
+              editForm.style.display = "none";
+            } else {
+              editForm.style.display = "block";
+            }
+          });
+        });
+
+        // Handle created/updated timestamps
+        document.querySelectorAll(".task-footer").forEach((footer) => {
+          const createdAt = footer.querySelector(".task-created-at");
+          const updatedAt = footer.querySelector(".task-updated-at");
+
+          if (!createdAt || !updatedAt) return;
+
+          const createdAtText = createdAt.textContent.trim();
+          const updatedAtText = updatedAt.textContent.trim();
+
+          if (updatedAtText) {
+            updatedAt.style.display = "inline-block";
+            updatedAt.innerHTML = ` ${updatedAtText}`;
+            createdAt.style.display = "none";
+          } else {
+            createdAt.style.display = "inline-block";
+            updatedAt.innerHTML = ` ${createdAtText}`;
+            updatedAt.style.display = "none";
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
