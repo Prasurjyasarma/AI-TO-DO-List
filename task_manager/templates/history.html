@@ -1,0 +1,42 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" type="text/css" href="{% static 'history.css' %}" />
+    <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+    <title>History</title>
+  </head>
+  <body>
+    <h1 data-aos="fade-in">History</h1>
+    <button data-aos="fade-in"><a href="{% url 'home' %}">Back</a></button>
+
+    <div class="history-container" data-aos="fade-up">
+      {% for task in tasks %}
+      <div class="task-card priority-{{ task.priority }}">
+        <h3>{{ task.title }}</h3>
+        <p>{{ task.description }}</p>
+        <p><strong>Priority:</strong> {{ task.priority }}</p>
+        <p><strong>Status:</strong> {{ task.status }}</p>
+        <p><strong>Created At:</strong> {{ task.created_at }}</p>
+      </div>
+      {% endfor %}
+    </div>
+    <footer class="footer">
+      <div class="footer-content">
+        <p>Built with ❤️ by Prasurjya Sarma</p>
+        <p>Check out my GitHub for the full project code! 🚀</p>
+        <div class="footer-links">
+          <a href="#" class="footer-link">Linkedin</a>
+          <a href="#" class="footer-link">Github</a>
+          <a href="#" class="footer-link">Instagram</a>
+        </div>
+      </div>
+    </footer>
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+    <script>
+      AOS.init();
+    </script>
+  </body>
+</html>
