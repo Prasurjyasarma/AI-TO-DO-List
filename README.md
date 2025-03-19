@@ -13,8 +13,7 @@ An advanced AI-powered to-do list that generates task descriptions automatically
 
 🛠️ Installation:
 1️⃣ Clone the Repository
-git clone https://github.com/your-username/your-repo.git
-cd your-repocd your-repo
+git clone https://github.com/Prasurjyasarma/AI-TO-DO-List.git
 
 2️⃣ Create a Virtual Environment & Install Dependencies
 python -m venv venv
