@@ -10,6 +10,7 @@ from django.contrib import messages
 from django.contrib.auth import authenticate,login,logout
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
+from openai import OpenAI
 
 
 #! REGISTER FUNCTION
@@ -154,36 +155,66 @@ def history_tasks(request):
     return render(request,"history.html",{'tasks':tasks})
 
 
-#! THIS IS THE AI GENERATED DESCRIPTION FUNCTION 
+#! THIS IS THE AI GENERATED DESCRIPTION FUNCTION ONLINE
 @login_required(login_url="/login/")
 def generate_description(request):
+    client = OpenAI(
+    base_url="https://api.aimlapi.com/v1",
+    api_key="088876c3dd364dc8b9aeaf6e32c68b2a"
+   )
+    
     if request.method == "POST" and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         title = request.POST.get('title', '')
-        
-        try:
-            # Use the Ollama API to generate a response
-            response = requests.post(
-                f"{settings.OLLAMA_HOST}api/generate",
-                json={
-                    "model": "gemma3:1b",
-                    "prompt": f"Give me a 2-word description of '{title}'. Provide a concise answer followed by a brief explanation for a todo list.",
-                    "stream": False
-                }
-            )
-            
-            response_data = response.json()
-            ai_response = response_data.get('response', '')
-            
 
-            explanation = ""
-            if "Explanation:" in ai_response:
-                explanation = ai_response.split("Explanation:")[1].strip()
-            elif "**Explanation:**" in ai_response:
-                explanation = ai_response.split("**Explanation:**")[1].strip()
-            
-            return JsonResponse({'description': explanation})
+        try:
+            # Call AIML API
+            response = client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {"role": "user", "content": f"Generate a concise, action-oriented task description (maximum 10 words) for the following to-do list item: '{title}'."}
+                ]
+            )
+            # Extract response message
+            ai_response = response.choices[0].message.content.strip()
+
+            return JsonResponse({'description': ai_response})
+        
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
-    
+
     return JsonResponse({'error': 'Invalid request'}, status=400)
+
+
+#! THIS IS THE AI GENERATED DESCRIPTION FUNCTION LOCALLY
+# @login_required(login_url="/login/")
+# def generate_description(request):
+#     if request.method == "POST" and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+#         title = request.POST.get('title', '')
+        
+#         try:
+#             # Use the Ollama API to generate a response
+#             response = requests.post(
+#                 f"{settings.OLLAMA_HOST}api/generate",
+#                 json={
+#                     "model": "gemma3:1b",
+#                     "prompt": f"Give me a 2-word description of '{title}'. Provide a concise answer followed by a brief explanation for a todo list.",
+#                     "stream": False
+#                 }
+#             )
+            
+#             response_data = response.json()
+#             ai_response = response_data.get('response', '')
+            
+
+#             explanation = ""
+#             if "Explanation:" in ai_response:
+#                 explanation = ai_response.split("Explanation:")[1].strip()
+#             elif "**Explanation:**" in ai_response:
+#                 explanation = ai_response.split("**Explanation:**")[1].strip()
+            
+#             return JsonResponse({'description': explanation})
+#         except Exception as e:
+#             return JsonResponse({'error': str(e)}, status=500)
+    
+#     return JsonResponse({'error': 'Invalid request'}, status=400)
 

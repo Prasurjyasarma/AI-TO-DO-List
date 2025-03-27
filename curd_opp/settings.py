@@ -134,3 +134,5 @@ STATICFILES_DIRS = [
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://127.0.0.1:11434/")
+
+AIML_API_KEY=os.getenv("088876c3dd364dc8b9aeaf6e32c68b2a")
